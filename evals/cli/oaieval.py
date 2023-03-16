@@ -16,6 +16,7 @@ import evals.base
 import evals.record
 from evals.base import ModelSpec, ModelSpecs
 from evals.registry import registry
+from ..plugins.manager import get_model_spec
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +70,13 @@ def run(args):
         eval_spec is not None
     ), f"Eval {args.eval} not found. Available: {list(sorted(registry._evals.keys()))}"
 
-    model_resolver = ModelResolver()
-
-    def get_model(name: str) -> ModelSpec:
-        return model_resolver.resolve(name)
-
-    completion_model_specs = [get_model(model) for model in args.model.split(",")]
+    completion_model_specs = [get_model_spec(model) for model in args.model.split(",")]
     model_specs = ModelSpecs(
         completions_=completion_model_specs,
-        embedding_=get_model(args.embedding_model) if args.embedding_model else None,
-        ranking_=get_model(args.ranking_model) if args.ranking_model else None,
+        embedding_=get_model_spec(args.embedding_model)
+        if args.embedding_model
+        else None,
+        ranking_=get_model_spec(args.ranking_model) if args.ranking_model else None,
     )
 
     run_config = {

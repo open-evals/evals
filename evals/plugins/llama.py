@@ -21,6 +21,6 @@ class LlamaRunner(_ModelRunner):
     def resolve(cls, name: str) -> ModelSpec:
         if name.startswith("llama"):
             return ModelSpec(
-                driver="llama", name=name, model=name, is_chat=False, n_ctx=2048
+                runner="llama", name=name, model=name, is_chat=False, n_ctx=2048
             )
         raise ValueError(f"Model {name} not found")
