@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod, abstractclassmethod
-from typing import ClassVar
+from abc import ABC, abstractmethod
 
 import pydantic
-from evals.base import ModelSpec
 
+from evals.base import ModelSpec
 from evals.prompt.base import OpenAICreateChatPrompt, OpenAICreatePrompt
 
 

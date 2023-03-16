@@ -15,14 +15,10 @@ from .base import _ModelRunner
 
 class OpenAIRunner(_ModelRunner):
     def completion(self, prompt: OpenAICreatePrompt, **kwargs):
-        return openai_completion_create_retrying(
-            model=self.name, prompt=prompt, **kwargs
-        )
+        return openai_completion_create_retrying(model=self.name, prompt=prompt, **kwargs)
 
     def chat_completion(self, messages: OpenAICreateChatPrompt, **kwargs):
-        return openai_chat_completion_create_retrying(
-            model=self.name, messages=messages, **kwargs
-        )
+        return openai_chat_completion_create_retrying(model=self.name, messages=messages, **kwargs)
 
     @classmethod
     def resolve(cls, name: str) -> ModelSpec:

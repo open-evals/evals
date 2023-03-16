@@ -1,9 +1,10 @@
+from importlib.metadata import EntryPoint
+
 from stevedore import _cache
 
 from evals.base import ModelSpec
 
 from .base import _ModelRunner
-from importlib.metadata import EntryPoint
 
 
 def load_runner(model_spec: ModelSpec) -> _ModelRunner:

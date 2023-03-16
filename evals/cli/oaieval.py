@@ -5,7 +5,6 @@ import argparse
 import logging
 import shlex
 import sys
-from functools import cached_property
 from typing import Any, Mapping, Optional
 
 import openai
@@ -14,8 +13,9 @@ import evals
 import evals.api
 import evals.base
 import evals.record
-from evals.base import ModelSpec, ModelSpecs
+from evals.base import ModelSpecs
 from evals.registry import registry
+
 from ..plugins.manager import get_model_spec
 
 logger = logging.getLogger(__name__)
@@ -34,9 +34,7 @@ def parse_args(args=sys.argv[1:]) -> argparse.Namespace:
     parser.add_argument("--extra_eval_params", type=str, default="")
     parser.add_argument("--max_samples", type=int, default=None)
     parser.add_argument("--cache", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument(
-        "--visible", action=argparse.BooleanOptionalAction, default=None
-    )
+    parser.add_argument("--visible", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--seed", type=int, default=20220722)
     parser.add_argument("--user", type=str, default="")
     parser.add_argument("--record_path", type=str, default=None)
@@ -44,15 +42,9 @@ def parse_args(args=sys.argv[1:]) -> argparse.Namespace:
         "--log_to_file", type=str, default=None, help="Log to a file instead of stdout"
     )
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument(
-        "--local-run", action=argparse.BooleanOptionalAction, default=True
-    )
-    parser.add_argument(
-        "--dry-run", action=argparse.BooleanOptionalAction, default=False
-    )
-    parser.add_argument(
-        "--dry-run-logging", action=argparse.BooleanOptionalAction, default=True
-    )
+    parser.add_argument("--local-run", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--dry-run-logging", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args(args)
 
 
@@ -73,9 +65,7 @@ def run(args):
     completion_model_specs = [get_model_spec(model) for model in args.model.split(",")]
     model_specs = ModelSpecs(
         completions_=completion_model_specs,
-        embedding_=get_model_spec(args.embedding_model)
-        if args.embedding_model
-        else None,
+        embedding_=get_model_spec(args.embedding_model) if args.embedding_model else None,
         ranking_=get_model_spec(args.ranking_model) if args.ranking_model else None,
     )
 
@@ -90,9 +80,7 @@ def run(args):
         },
     }
 
-    model_name = (
-        model_specs.completions_[0].name if len(model_specs.completions_) > 0 else "n/a"
-    )
+    model_name = model_specs.completions_[0].name if len(model_specs.completions_) > 0 else "n/a"
     eval_name = eval_spec.key
     run_spec = evals.base.RunSpec(
         model_name=model_name,
@@ -108,9 +96,7 @@ def run(args):
     else:
         record_path = args.record_path
     if args.dry_run:
-        recorder = evals.record.DummyRecorder(
-            run_spec=run_spec, log=args.dry_run_logging
-        )
+        recorder = evals.record.DummyRecorder(run_spec=run_spec, log=args.dry_run_logging)
     elif args.local_run:
         recorder = evals.record.LocalRecorder(record_path, run_spec=run_spec)
     else:
@@ -145,9 +131,7 @@ def run(args):
     extra_eval_params = parse_extra_eval_params(args.extra_eval_params)
 
     eval_class = registry.get_class(eval_spec)
-    eval = eval_class(
-        model_specs=model_specs, seed=args.seed, name=eval_name, **extra_eval_params
-    )
+    eval = eval_class(model_specs=model_specs, seed=args.seed, name=eval_name, **extra_eval_params)
     result = eval.run(recorder)
     recorder.record_final_report(result)
 

@@ -15,6 +15,7 @@ from evals.prompt.base import (
     Prompt,
 )
 from evals.record import record_match, record_sampling
+
 from .plugins.manager import load_runner
 
 logger = logging.getLogger(__name__)
@@ -47,18 +48,9 @@ def completion_query(
     if not isinstance(prompt, Prompt):
         assert (
             isinstance(prompt, str)
-            or (
-                isinstance(prompt, list)
-                and all(isinstance(token, int) for token in prompt)
-            )
-            or (
-                isinstance(prompt, list)
-                and all(isinstance(token, str) for token in prompt)
-            )
-            or (
-                isinstance(prompt, list)
-                and all(isinstance(msg, dict) for msg in prompt)
-            )
+            or (isinstance(prompt, list) and all(isinstance(token, int) for token in prompt))
+            or (isinstance(prompt, list) and all(isinstance(token, str) for token in prompt))
+            or (isinstance(prompt, list) and all(isinstance(msg, dict) for msg in prompt))
         ), f"Got type {type(prompt)}, with val {type(prompt[0])} for prompt, expected str or list[int] or list[str] or list[dict[str, str]]"
 
         if model_spec.is_chat:
@@ -239,19 +231,11 @@ def sample_freeform(
         def _maybe_top_logprobs(
             logprobs: Optional[dict],
         ) -> Optional[list[dict[str, float]]]:
-            return (
-                [dict(x) for x in logprobs["top_logprobs"]]
-                if logprobs is not None
-                else None
-            )
+            return [dict(x) for x in logprobs["top_logprobs"]] if logprobs is not None else None
 
         tokens = [_maybe_tokens(choice["logprobs"]) for choice in response["choices"]]
-        logprobs = [
-            _maybe_logprobs(choice["logprobs"]) for choice in response["choices"]
-        ]
-        top_logprobs = [
-            _maybe_top_logprobs(choice["logprobs"]) for choice in response["choices"]
-        ]
+        logprobs = [_maybe_logprobs(choice["logprobs"]) for choice in response["choices"]]
+        top_logprobs = [_maybe_top_logprobs(choice["logprobs"]) for choice in response["choices"]]
         if n_samples is None:
             tokens = tokens[0]
             logprobs = logprobs[0]
