@@ -15,10 +15,7 @@ from evals.prompt.base import (
     Prompt,
 )
 from evals.record import record_match, record_sampling
-from evals.utils.api_utils import (
-    openai_chat_completion_create_retrying,
-    openai_completion_create_retrying,
-)
+from .plugins.manager import load_runner
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +47,18 @@ def completion_query(
     if not isinstance(prompt, Prompt):
         assert (
             isinstance(prompt, str)
-            or (isinstance(prompt, list) and all(isinstance(token, int) for token in prompt))
-            or (isinstance(prompt, list) and all(isinstance(token, str) for token in prompt))
-            or (isinstance(prompt, list) and all(isinstance(msg, dict) for msg in prompt))
+            or (
+                isinstance(prompt, list)
+                and all(isinstance(token, int) for token in prompt)
+            )
+            or (
+                isinstance(prompt, list)
+                and all(isinstance(token, str) for token in prompt)
+            )
+            or (
+                isinstance(prompt, list)
+                and all(isinstance(msg, dict) for msg in prompt)
+            )
         ), f"Got type {type(prompt)}, with val {type(prompt[0])} for prompt, expected str or list[int] or list[str] or list[dict[str, str]]"
 
         if model_spec.is_chat:
@@ -68,15 +74,17 @@ def completion_query(
         OpenAICreatePrompt, OpenAICreateChatPrompt
     ] = prompt.to_openai_create_prompt()
 
+    model = load_runner(model_spec)
+
     if model_spec.is_chat:
-        result = openai_chat_completion_create_retrying(
+        result = model.chat_completion(
             model=model_spec.model,
             api_key=model_spec.api_key,
             messages=openai_create_prompt,
             **{**kwargs, **model_spec.extra_options},
         )
     else:
-        result = openai_completion_create_retrying(
+        result = model.completion(
             model=model_spec.model,
             api_key=model_spec.api_key,
             prompt=openai_create_prompt,
@@ -228,12 +236,22 @@ def sample_freeform(
         def _maybe_logprobs(logprobs: Optional[dict]) -> Optional[list[float]]:
             return logprobs["token_logprobs"] if logprobs is not None else None
 
-        def _maybe_top_logprobs(logprobs: Optional[dict]) -> Optional[list[dict[str, float]]]:
-            return [dict(x) for x in logprobs["top_logprobs"]] if logprobs is not None else None
+        def _maybe_top_logprobs(
+            logprobs: Optional[dict],
+        ) -> Optional[list[dict[str, float]]]:
+            return (
+                [dict(x) for x in logprobs["top_logprobs"]]
+                if logprobs is not None
+                else None
+            )
 
         tokens = [_maybe_tokens(choice["logprobs"]) for choice in response["choices"]]
-        logprobs = [_maybe_logprobs(choice["logprobs"]) for choice in response["choices"]]
-        top_logprobs = [_maybe_top_logprobs(choice["logprobs"]) for choice in response["choices"]]
+        logprobs = [
+            _maybe_logprobs(choice["logprobs"]) for choice in response["choices"]
+        ]
+        top_logprobs = [
+            _maybe_top_logprobs(choice["logprobs"]) for choice in response["choices"]
+        ]
         if n_samples is None:
             tokens = tokens[0]
             logprobs = logprobs[0]

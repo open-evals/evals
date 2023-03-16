@@ -33,7 +33,9 @@ def parse_args(args=sys.argv[1:]) -> argparse.Namespace:
     parser.add_argument("--extra_eval_params", type=str, default="")
     parser.add_argument("--max_samples", type=int, default=None)
     parser.add_argument("--cache", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--visible", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--visible", action=argparse.BooleanOptionalAction, default=None
+    )
     parser.add_argument("--seed", type=int, default=20220722)
     parser.add_argument("--user", type=str, default="")
     parser.add_argument("--record_path", type=str, default=None)
@@ -41,74 +43,16 @@ def parse_args(args=sys.argv[1:]) -> argparse.Namespace:
         "--log_to_file", type=str, default=None, help="Log to a file instead of stdout"
     )
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument("--local-run", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument("--dry-run-logging", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--local-run", action=argparse.BooleanOptionalAction, default=True
+    )
+    parser.add_argument(
+        "--dry-run", action=argparse.BooleanOptionalAction, default=False
+    )
+    parser.add_argument(
+        "--dry-run-logging", action=argparse.BooleanOptionalAction, default=True
+    )
     return parser.parse_args(args)
-
-
-def n_ctx_from_model_name(model_name: str) -> Optional[int]:
-    """Returns n_ctx for a given API model name. Model list last updated 2023-03-14."""
-    # note that for most models, the max tokens is n_ctx + 1
-    DICT_OF_N_CTX_BY_MODEL_NAME_PREFIX: dict[str, int] = {
-        "gpt-3.5-turbo-": 4096,
-        "gpt-4-": 8192,
-        "gpt-4-32k-": 32768,
-    }
-    DICT_OF_N_CTX_BY_MODEL_NAME: dict[str, int] = {
-        "ada": 2048,
-        "text-ada-001": 2048,
-        "babbage": 2048,
-        "text-babbage-001": 2048,
-        "curie": 2048,
-        "text-curie-001": 2048,
-        "davinci": 2048,
-        "text-davinci-001": 2048,
-        "code-davinci-002": 8000,
-        "text-davinci-002": 4096,
-        "text-davinci-003": 4096,
-        "gpt-3.5-turbo": 4096,
-        "gpt-3.5-turbo-0301": 4096,
-        "gpt-4": 8192,
-        "gpt-4-0314": 8192,
-        "gpt-4-32k": 32768,
-        "gpt-4-32k-0314": 32768,
-    }
-    # first, look for a prefix match
-    for model_prefix, n_ctx in DICT_OF_N_CTX_BY_MODEL_NAME_PREFIX.items():
-        if model_name.startswith(model_prefix):
-            return n_ctx
-    # otherwise, look for an exact match and return None if not found
-    return DICT_OF_N_CTX_BY_MODEL_NAME.get(model_name, None)
-
-
-class ModelResolver:
-    # This is a temporary method to identify which models are chat models.
-    # Eventually, the OpenAI API should expose this information directly.
-    CHAT_MODELS = {
-        "gpt-3.5-turbo",
-        "gpt-3.5-turbo-0301",
-        "gpt-4",
-        "gpt-4-0314",
-        "gpt-4-32k",
-        "gpt-4-32k-0314",
-    }
-
-    def resolve(self, name: str) -> ModelSpec:
-        if name in self.api_model_ids:
-            result = ModelSpec(
-                name=name,
-                model=name,
-                is_chat=(name in self.CHAT_MODELS),
-                n_ctx=n_ctx_from_model_name(name),
-            )
-            return result
-
-        raise ValueError(f"Couldn't find model: {name}")
-
-    @cached_property
-    def api_model_ids(self):
-        return [m["id"] for m in openai.Model.list()["data"]]
 
 
 def run(args):
@@ -148,7 +92,9 @@ def run(args):
         },
     }
 
-    model_name = model_specs.completions_[0].name if len(model_specs.completions_) > 0 else "n/a"
+    model_name = (
+        model_specs.completions_[0].name if len(model_specs.completions_) > 0 else "n/a"
+    )
     eval_name = eval_spec.key
     run_spec = evals.base.RunSpec(
         model_name=model_name,
@@ -164,7 +110,9 @@ def run(args):
     else:
         record_path = args.record_path
     if args.dry_run:
-        recorder = evals.record.DummyRecorder(run_spec=run_spec, log=args.dry_run_logging)
+        recorder = evals.record.DummyRecorder(
+            run_spec=run_spec, log=args.dry_run_logging
+        )
     elif args.local_run:
         recorder = evals.record.LocalRecorder(record_path, run_spec=run_spec)
     else:
@@ -199,7 +147,9 @@ def run(args):
     extra_eval_params = parse_extra_eval_params(args.extra_eval_params)
 
     eval_class = registry.get_class(eval_spec)
-    eval = eval_class(model_specs=model_specs, seed=args.seed, name=eval_name, **extra_eval_params)
+    eval = eval_class(
+        model_specs=model_specs, seed=args.seed, name=eval_name, **extra_eval_params
+    )
     result = eval.run(recorder)
     recorder.record_final_report(result)
 

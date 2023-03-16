@@ -1,21 +1,20 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractclassmethod
 from typing import ClassVar
+
 import pydantic
+from evals.base import ModelSpec
 
 from evals.prompt.base import OpenAICreateChatPrompt, OpenAICreatePrompt
 
 
-class _ChatCompletionModel(pydantic.BaseModel, ABC):
-    name: ClassVar[str]
-
+class _ModelRunner(pydantic.BaseModel, ABC):
+    @classmethod
     @abstractmethod
-    def run(self, prompt: OpenAICreatePrompt, **kwargs):
+    def resolve(cls, name: str) -> ModelSpec:
         raise NotImplementedError
 
+    def completion(self, prompt: OpenAICreatePrompt, **kwargs):
+        raise NotImplementedError
 
-class _CompletionModel(pydantic.BaseModel, ABC):
-    name: ClassVar[str]
-
-    @abstractmethod
-    def run(self, message: OpenAICreateChatPrompt, **kwargs):
+    def chat_completion(self, message: OpenAICreateChatPrompt, **kwargs):
         raise NotImplementedError
