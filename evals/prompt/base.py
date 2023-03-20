@@ -31,7 +31,7 @@ def chat_prompt_to_text_prompt(prompt: OpenAICreateChatPrompt) -> str:
         "system": "",
         # names
         "example_user": "User: ",
-        "example_assistant": "Assistant: ",
+        "example_assistant": "Solution: ",
     }
 
     # For a single message, be it system, user, or assistant, just return the message
@@ -44,7 +44,7 @@ def chat_prompt_to_text_prompt(prompt: OpenAICreateChatPrompt) -> str:
         prefix = chat_to_prefixes.get(role, role.capitalize() + ": ")
         content = msg["content"]
         text += f"{prefix}{content}\n"
-    text += "Assistant: "
+    text += "Solution:"
     return text.lstrip()
 
 
@@ -111,5 +111,8 @@ class ChatCompletionPrompt(Prompt):
 
     def to_openai_create_prompt(self) -> OpenAICreateChatPrompt:
         if is_chat_prompt(self.raw_prompt):
+            for prompt in self.raw_prompt:
+                if prompt['role'] not in ['system', 'user', 'assistant']:
+                    prompt['role'] = 'system'
             return self.raw_prompt
         return self._render_text_as_chat_prompt(self.raw_prompt)
