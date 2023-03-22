@@ -10,9 +10,9 @@ from .base import _ModelRunner
 
 class LlamaRunner(_ModelRunner):
     def completion(self, prompt: OpenAICreatePrompt, **kwargs):
+        prompt = prompt.replace("Assistant:", "Solution:")
         # NOTE: run evals against LLAMA API server, you can get the LLAMA API server from https://github.com/open-evals/pyllama
         r = requests.post(f"{os.environ['LLAMA_SERVER']}/prompt", json={"prompts": [prompt], "temperature": 0, "top_p": 0.95})
-        prompt = prompt.replace("Assistant:", "Solution:")
         result = r.json()
         prompt_list = prompt.split("\n")
         result_list = [sentence for sentence in result["results"][0].split("\n") if sentence != ""]
