@@ -15,7 +15,7 @@ class LlamaRunner(_ModelRunner):
         r = requests.post(f"{os.environ['LLAMA_SERVER']}/prompt", json={"prompts": [prompt], "temperature": 0, "top_p": 0.95})
         result = r.json()
         prompt_list = prompt.split("\n")
-        result_list = [sentence for sentence in result["results"][0].split("\n") if sentence != ""]
+        result_list = [sentence for sentence in result["results"][0].split("\n") if sentence != ""] # result format: dict[str] 
         ans = ""
         for i, prompt in enumerate(prompt_list):
             if prompt != result_list[i]:                
